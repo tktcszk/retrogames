@@ -225,6 +225,7 @@ class Sushi:
         self.age = 0
         self.spoil = pyxel.rndi(20, 50) * self.speed
         self.life = self.spoil + pyxel.rndi(15, 30)
+        self.mode = pyxel.rndi(1, 2)
 
     def change_direction(self):
         if self.direction_x == -1:
@@ -262,7 +263,9 @@ class Sushi:
         if self.spoiled:
             pyxel.blt(self.x, self.y, 0, 9, (self.age % 4) * 8, 6, 8, 0)
         else:
-            pyxel.blt(self.x, self.y, 0, 0, (self.age % 3) * 3, 8, 3, 0)
-
+            if self.mode == 1:
+                pyxel.blt(self.x, self.y, 0, 0, (self.age % 3) * 3, 8, 3, 0)
+            else:
+                pyxel.blt(self.x, self.y, 0, 0, 9 + (self.age % 6) * 3, 8, 3, 0)
 
 SushiGame()
