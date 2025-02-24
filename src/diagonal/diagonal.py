@@ -112,6 +112,7 @@ class Diagonal:
         self.table = []
         self.cursor_row = 0
         self.cursor_col = 0
+        self.turn = 0
 
     def reset_game(self):
         self.score = 0
@@ -137,31 +138,32 @@ class Diagonal:
                 self.reset_game()
             return
         else:
-            if pyxel.btn(pyxel.KEY_LEFT):
-                if self.cursor_col == 0:
-                    self.cursor_col = TABLE_SIZE - 1
-                else:
-                    self.cursor_col -= 1
-            if pyxel.btn(pyxel.KEY_RIGHT):
-                if self.cursor_col == TABLE_SIZE - 1:
-                    self.cursor_col = 0
-                else:
-                    self.cursor_col += 1
-            if pyxel.btn(pyxel.KEY_UP):
-                if self.cursor_row == 0:
-                    self.cursor_row = TABLE_SIZE - 1
-                else:
-                    self.cursor_row -= 1
-            if pyxel.btn(pyxel.KEY_DOWN):
-                if self.cursor_row == TABLE_SIZE - 1:
-                    self.cursor_row = 0
-                else:
-                    self.cursor_row += 1
+            if self.turn == 1:
+                if pyxel.btn(pyxel.KEY_LEFT):
+                    if self.cursor_col == 0:
+                        self.cursor_col = TABLE_SIZE - 1
+                    else:
+                        self.cursor_col -= 1
+                if pyxel.btn(pyxel.KEY_RIGHT):
+                    if self.cursor_col == TABLE_SIZE - 1:
+                        self.cursor_col = 0
+                    else:
+                        self.cursor_col += 1
+                if pyxel.btn(pyxel.KEY_UP):
+                    if self.cursor_row == 0:
+                        self.cursor_row = TABLE_SIZE - 1
+                    else:
+                        self.cursor_row -= 1
+                if pyxel.btn(pyxel.KEY_DOWN):
+                    if self.cursor_row == TABLE_SIZE - 1:
+                        self.cursor_row = 0
+                    else:
+                        self.cursor_row += 1
 
-            if pyxel.btn(pyxel.KEY_A):
-                self.propagete(self.cursor_row, self.cursor_col, SIDE_LEFT)
-            if pyxel.btn(pyxel.KEY_B):
-                self.propagete(self.cursor_row, self.cursor_col, SIDE_RIGHT)
+                if pyxel.btn(pyxel.KEY_A):
+                    self.propagete(self.cursor_row, self.cursor_col, SIDE_LEFT)
+                if pyxel.btn(pyxel.KEY_B):
+                    self.propagete(self.cursor_row, self.cursor_col, SIDE_RIGHT)
 
         for col in range(TABLE_SIZE):
             for row in range(TABLE_SIZE):
