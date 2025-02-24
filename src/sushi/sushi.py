@@ -58,7 +58,8 @@ class SushiGame:
         self.score = 0
 
     def update(self):
-        self.hit = False
+        if self.hit  > 0:
+            self.hit -= 1
 
         if self.is_title or self.is_gameover:
             if pyxel.btnp(pyxel.KEY_UP) or pyxel.btnp(pyxel.GAMEPAD1_BUTTON_DPAD_UP):
@@ -93,19 +94,23 @@ class SushiGame:
         for sushi in self.sushi_list:
             if is_overlapping(self.player, sushi):
                 if sushi.spoiled:
-                    self.score -= 1
                     pyxel.play(1, 1)
+                    self.player.refresh()
                     sushi.alive = False
-                    self.hit = True
+                    self.hit = 5
                     break
                 else:
-                    self.score += 1
-                    pyxel.play(0, 1)
-                    sushi.alive = False
-                    gain = pyxel.rndi(1, 4)
-                    for i in range(gain):
-                        self.sushi_list.append(Sushi(self))
-                    break
+                    if self.player.enough:
+                        pass
+                    else:
+                        self.score += 1
+                        self.player.eat()
+                        pyxel.play(0, 1)
+                        sushi.alive = False
+                        gain = pyxel.rndi(1, 4)
+                        for i in range(gain):
+                            self.sushi_list.append(Sushi(self))
+                        break
 
         if len(self.sushi_list) <= 0:
             self.is_gameover = True
@@ -114,8 +119,8 @@ class SushiGame:
             self.is_gameover = True
 
     def draw(self):
-        if self.hit:
-            pyxel.cls(2)
+        if self.hit > 0:
+            pyxel.cls(pyxel.rndi(1,16))
         else:
             pyxel.cls(0)
 
@@ -167,7 +172,6 @@ class SushiGame:
             color = 7 if i == 0 else 0
             pyxel.text(3 + i, 3, fscore, color)
 
-
 class Player:
     def __init__(self, game, x=None, y=None):
         self.game = (game,)
@@ -177,11 +181,22 @@ class Player:
         self.size = 8
         self.costume = 1
         self.alive = True
+        self.eat_count = 0
+        self.enough = False
+    
+    def eat(self):
+        self.eat_count += 1
+    
+    def refresh(self):
+        self.eat_count = 0
+        self.enough = False
 
     def update(self):
         self.costume = self.costume + 1
         if self.costume > 4:
             self.costume = 1
+        if self.eat_count > 5:
+            self.enough = True
 
     def speedup(self, flag):
         self.speed = 7 if flag else 2
@@ -203,8 +218,10 @@ class Player:
         self.move2(-1, 0)
 
     def draw(self):
-        pyxel.blt(self.x, self.y, 0, 16, (self.costume % 2) * 8, 8, 8, 0)
-
+        if not self.enough:
+            pyxel.blt(self.x, self.y, 0, 16, (self.costume % 2) * 8, 8, 8, 0)
+        else:
+            pyxel.blt(self.x, self.y, 0, 16, 16 + (self.costume % 2) * 8, 8, 8, 0)
 
 class Sushi:
     def __init__(self, game, x=None, y=None):
