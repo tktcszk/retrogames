@@ -5,11 +5,6 @@ GAME_TITLE = "SUSHI"
 WINDOW_WIDTH = 100
 WINDOW_HEIGHT = 100
 INITIAL_COUNT = 4
-COLOR_CHILD = 0xF
-COLOR_ADULT = 0x2
-COLOR_SICK = 0x8
-COLOR_PLAYER = 0x7
-
 
 def cmp(a, b):
     if a == b:
@@ -225,7 +220,7 @@ class Sushi:
         self.age = 0
         self.spoil = pyxel.rndi(20, 50) * self.speed
         self.life = self.spoil + pyxel.rndi(15, 30)
-        self.mode = pyxel.rndi(1, 2)
+        self.menu = pyxel.rndi(1, 3)
 
     def change_direction(self):
         if self.direction_x == -1:
@@ -263,9 +258,11 @@ class Sushi:
         if self.spoiled:
             pyxel.blt(self.x, self.y, 0, 9, (self.age % 4) * 8, 6, 8, 0)
         else:
-            if self.mode == 1:
+            if self.menu == 1:
                 pyxel.blt(self.x, self.y, 0, 0, (self.age % 3) * 3, 8, 3, 0)
-            else:
+            elif self.menu == 2:
                 pyxel.blt(self.x, self.y, 0, 0, 9 + (self.age % 6) * 3, 8, 3, 0)
+            elif self.menu == 3:
+                pyxel.blt(self.x, self.y, 0, 0, 27 + (self.age % 2) * 5, 8, 5, 0)
 
 SushiGame()
