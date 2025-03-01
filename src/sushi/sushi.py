@@ -31,11 +31,19 @@ def direction(a, b, leave=False):
 
 
 def is_overlapping(a, b):
-    x_overlap = a.x <= b.x <= a.x + a.size or a.x < b.x + b.size <= a.x + a.size
-    y_overlap = a.y <= b.y <= a.y + a.size or a.y < b.y + b.size <= a.y + a.size
-
+    x_overlap = a.x - a.size / 2 <= b.x <= a.x + a.size / 2 or b.x - b.size / 2 <= a.x <= b.x + b.size / 2
+    y_overlap = a.y - a.size / 2 <= b.y <= a.y + a.size / 2 or b.y - b.size / 2 <= a.y <= b.y + b.size / 2
     return x_overlap and y_overlap
 
+def circle(x, y, r, p):
+    interval = 360 / p
+    d = 0
+    while d < 360:
+        yield x + math.sin(math.radians(d)) * r, y + math.cos(math.radians(d)) * r
+        d += interval
+
+def middle(x1, y1, x2, y2):
+    return (x1 + x2) / 2, (y1 + y2) / 2,
 
 class SushiGame:
     def __init__(self):
@@ -90,6 +98,9 @@ class SushiGame:
             else:
                 self.player.speedup(False)
 
+            if pyxel.btnp(pyxel.KEY_B) or pyxel.btnp(pyxel.GAMEPAD1_BUTTON_B):
+                self.player.chopstick()
+
         self.player.update()
 
         for sushi in self.sushi_list:
@@ -98,7 +109,7 @@ class SushiGame:
         self.sushi_list = [sushi for sushi in self.sushi_list if sushi.alive]
 
         for sushi in self.sushi_list:
-            if is_overlapping(self.player, sushi):
+            if is_overlapping(self.player, sushi) or (self.player._chopstick and is_overlapping(self.player._chopstick, sushi)):
                 if sushi.spoiled:
                     pyxel.play(1, 1)
                     self.player.refresh()
@@ -115,9 +126,9 @@ class SushiGame:
                         self.messages.append(Message(MENU[sushi.menu], sushi.x, sushi.y, 4))
                         pyxel.play(0, 1)
                         sushi.alive = False
-                        gain = pyxel.rndi(1, 4)
-                        for i in range(gain):
-                            self.sushi_list.append(Sushi(self))
+                        gain = [1,1,1,1,2,2,2,3,3,4,6,12][pyxel.rndi(0,11)]
+                        for x, y in circle(self.player.x, self.player.y, 20, gain):
+                            self.sushi_list.append(Sushi(self, x, y, 1 if self.player.x < x else -1, 1 if self.player.y < y else -1))
                         break
 
         if len(self.sushi_list) <= 0:
@@ -202,6 +213,7 @@ class Player:
         self.alive = True
         self.eat_count = 0
         self.enough = False
+        self._chopstick = None
     
     def eat(self):
         self.eat_count += 1
@@ -209,6 +221,10 @@ class Player:
     def refresh(self):
         self.eat_count = 0
         self.enough = False
+    
+    def chopstick(self):
+        if not self._chopstick:
+            self._chopstick = Chopstick(self.x, self.y)
 
     def update(self):
         self.costume = self.costume + 1
@@ -216,6 +232,11 @@ class Player:
             self.costume = 1
         if self.eat_count > 5:
             self.enough = True
+        if self._chopstick:
+            if self._chopstick.alive:
+                self._chopstick.update(self.x, self.y)
+            else:
+                self._chopstick = None
 
     def speedup(self, flag):
         self.speed = 7 if flag else 2
@@ -238,21 +259,23 @@ class Player:
 
     def draw(self):
         if not self.enough:
-            pyxel.blt(self.x, self.y, 0, 16, (self.costume % 2) * 8, 8, 8, 0)
+            pyxel.blt(self.x - 4, self.y - 4, 0, 16, (self.costume % 2) * 8, 8, 8, 0)
         else:
-            pyxel.blt(self.x, self.y, 0, 16, 16 + (self.costume % 2) * 8, 8, 8, 0)
+            pyxel.blt(self.x - 4, self.y - 4, 0, 16, 16 + (self.costume % 2) * 8, 8, 8, 0)
 
+        if self._chopstick:
+            self._chopstick.draw()
 class Sushi:
-    def __init__(self, game, x=None, y=None):
+    def __init__(self, game, x=None, y=None, dx=None, dy=None):
         self.game = game
         self.x = x if x else pyxel.rndi(0, WINDOW_WIDTH)
         self.y = y if y else pyxel.rndi(0, WINDOW_HEIGHT)
         self.speed = pyxel.rndi(1, 3)
-        self.direction_x = pyxel.rndi(1, 3) - 2
-        self.direction_y = pyxel.rndi(1, 3) - 2
+        self.direction_x = dx if dx else pyxel.rndi(1, 3) - 2
+        self.direction_y = dy if dy else pyxel.rndi(1, 3) - 2
         self.alive = True
         self.spoiled = False
-        self.size = 6
+        self.size = 8
         self.age = 0
         self.spoil = pyxel.rndi(20, 50) * self.speed
         self.life = self.spoil + pyxel.rndi(15, 30)
@@ -291,15 +314,18 @@ class Sushi:
             self.alive = False
 
     def draw(self):
-        if self.spoiled:
-            pyxel.blt(self.x, self.y, 0, 9, (self.age % 4) * 8, 6, 8, 0)
+        if self.age < 3:
+            pyxel.pset(self.x, self.y, 7)
         else:
-            if self.menu == 1:
-                pyxel.blt(self.x, self.y, 0, 0, (self.age % 3) * 3, 8, 3, 0)
-            elif self.menu == 2:
-                pyxel.blt(self.x, self.y, 0, 0, 9 + (self.age % 6) * 3, 8, 3, 0)
-            elif self.menu == 3:
-                pyxel.blt(self.x, self.y, 0, 0, 27 + (self.age % 2) * 5, 8, 5, 0)
+            if self.spoiled:
+                pyxel.blt(self.x - 4, self.y - 4, 0, 9, (self.age % 4) * 8, 6, 8, 0)
+            else:
+                if self.menu == 1:
+                    pyxel.blt(self.x - 4, self.y - 4, 0, 0, (self.age % 3) * 3, 8, 3, 0)
+                elif self.menu == 2:
+                    pyxel.blt(self.x - 4, self.y - 4, 0, 0, 9 + (self.age % 6) * 3, 8, 3, 0)
+                elif self.menu == 3:
+                    pyxel.blt(self.x - 4, self.y - 4, 0, 0, 27 + (self.age % 2) * 5, 8, 5, 0)
 
 class Message:
     def __init__(self, message, x, y, ttl=10):
@@ -317,6 +343,35 @@ class Message:
     def draw(self):
         message_x = self.x - (len(self.message) / 2) * 4
         pyxel.text(message_x, self.y, self.message, 3)
+
+class Chopstick:
+    def __init__(self, x, y):
+        self.x1 = x
+        self.x2 = None
+        self.y1 = y
+        self.y2 = None
+        self.x = None
+        self.y = None
+        self.size = 8
+        self.length = 8
+        self.interval = 0
+        self.alive = True
+    
+    def update(self, x, y):
+        self.interval += 1
+        if self.interval > 12:
+            self.alive = False
+
+        self.x1 = x + math.sin(math.radians(30 * self.interval)) * 6
+        self.y1 = y + math.cos(math.radians(30 * self.interval)) * 6
+        self.x2 = self.x1 + math.sin(math.radians(30 * self.interval)) * self.length
+        self.y2 = self.y1 + math.cos(math.radians(30 * self.interval)) * self.length
+        self.x, self.y = middle(self.x1, self.y1, self.x2, self.y2) 
+    
+    def draw(self):
+        pyxel.line(self.x1, self.y1, self.x2, self.y2, 7)
+        pyxel.pset(self.x, self.y, 11)
+
 
 
 SushiGame()
