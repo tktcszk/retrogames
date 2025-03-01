@@ -5,6 +5,11 @@ GAME_TITLE = "SUSHI"
 WINDOW_WIDTH = 100
 WINDOW_HEIGHT = 100
 INITIAL_COUNT = 4
+MENU = {
+    1: "Saba",
+    2: "Maguro",
+    3: "Gunkan",
+}
 
 def cmp(a, b):
     if a == b:
@@ -40,6 +45,7 @@ class SushiGame:
         self.is_title = True
         self.is_gameover = False
         self.sushi_list = []
+        self.messages = []
         self.player = None
         self.score = 0
         self.hit = False
@@ -98,6 +104,7 @@ class SushiGame:
                     self.player.refresh()
                     sushi.alive = False
                     self.hit = 5
+                    self.messages.append(Message("Agari", sushi.x, sushi.y))
                     break
                 else:
                     if self.player.enough:
@@ -105,6 +112,7 @@ class SushiGame:
                     else:
                         self.score += 1
                         self.player.eat()
+                        self.messages.append(Message(MENU[sushi.menu], sushi.x, sushi.y, 4))
                         pyxel.play(0, 1)
                         sushi.alive = False
                         gain = pyxel.rndi(1, 4)
@@ -118,11 +126,18 @@ class SushiGame:
         if not self.player.alive:
             self.is_gameover = True
 
+        for message in self.messages:
+            message.update()
+
+        self.messages = [message for message in self.messages if message.alive]
+
+
     def draw(self):
-        if self.hit > 0:
-            pyxel.cls(pyxel.rndi(1,16))
-        else:
-            pyxel.cls(0)
+        #if self.hit > 0:
+        #    pyxel.cls(pyxel.rndi(1,16))
+        #else:
+        #    pyxel.cls(0)
+        pyxel.cls(0)
 
         if self.is_title:
             self.draw_title()
@@ -136,6 +151,10 @@ class SushiGame:
 
         for sushi in self.sushi_list:
             sushi.draw()
+
+        for message in self.messages:
+            message.draw()
+
         self.player.draw()
 
     def draw_title(self):
@@ -281,5 +300,23 @@ class Sushi:
                 pyxel.blt(self.x, self.y, 0, 0, 9 + (self.age % 6) * 3, 8, 3, 0)
             elif self.menu == 3:
                 pyxel.blt(self.x, self.y, 0, 0, 27 + (self.age % 2) * 5, 8, 5, 0)
+
+class Message:
+    def __init__(self, message, x, y, ttl=10):
+        self.message = message
+        self.x = y
+        self.y = y
+        self.ttl = ttl
+        self.alive = True
+    
+    def update(self):
+        self.ttl -= 1
+        if self.ttl < 0:
+            self.alive = False
+    
+    def draw(self):
+        message_x = self.x - (len(self.message) / 2) * 4
+        pyxel.text(message_x, self.y, self.message, 3)
+
 
 SushiGame()
