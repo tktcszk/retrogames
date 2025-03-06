@@ -144,10 +144,6 @@ class SushiGame:
 
 
     def draw(self):
-        #if self.hit > 0:
-        #    pyxel.cls(pyxel.rndi(1,16))
-        #else:
-        #    pyxel.cls(0)
         pyxel.cls(0)
 
         if self.is_title:
@@ -186,18 +182,28 @@ class SushiGame:
             title_x = WINDOW_WIDTH / 2 - (len(GAME_TITLE) / 2) * 4
             pyxel.text(title_x, 20 + i, GAME_TITLE, color)
 
-        message = "GAME OVER"
+        message = "CHECKOUT!"
         message_x = WINDOW_WIDTH / 2 - (len(message) / 2) * 4
 
-        pyxel.text(message_x, 30 + i, message, 2)
+        pyxel.text(message_x, 30, message, 2)
+
+        message = f"YOU ATE {self.score:4} KAN OF SUSHI"
+        message_x = WINDOW_WIDTH / 2 - (len(message) / 2) * 4
+
+        pyxel.text(message_x, 40, message, 3)
+
+        message = f"BILL IS {self.score * 100:6} YEN"
+        message_x = WINDOW_WIDTH / 2 - (len(message) / 2) * 4
+
+        pyxel.text(message_x, 50, message, 3)
 
         message = "- Press Up Key -"
         message_x = WINDOW_WIDTH / 2 - (len(message) / 2) * 4
 
-        pyxel.text(message_x, 40 + i, message, 3)
+        pyxel.text(message_x, 60, message, 3)
 
     def draw_score(self):
-        fscore = f"SCORE:{self.score:04}"
+        fscore = f"{self.score:04} KAN"
         for i in range(1, -1, -1):
             color = 7 if i == 0 else 0
             pyxel.text(3 + i, 3, fscore, color)
