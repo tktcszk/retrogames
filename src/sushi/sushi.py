@@ -55,6 +55,7 @@ class SushiGame:
         self.sushi_list = []
         self.messages = []
         self.player = None
+        self.taisho = None
         self.score = 0
         self.hit = False
         self.reset_game()
@@ -75,11 +76,21 @@ class SushiGame:
         if self.hit  > 0:
             self.hit -= 1
 
+        if self.is_title:
+            if pyxel.btnp(pyxel.KEY_UP) or pyxel.btnp(pyxel.GAMEPAD1_BUTTON_DPAD_UP):
+                self.is_title = False
+                self.is_gameover = False
+                self.reset_game()
+            return
         if self.is_title or self.is_gameover:
             if pyxel.btnp(pyxel.KEY_UP) or pyxel.btnp(pyxel.GAMEPAD1_BUTTON_DPAD_UP):
                 self.is_title = False
                 self.is_gameover = False
                 self.reset_game()
+            if not self.taisho:
+                self.taisho = Taisho(self)
+            else:
+                self.taisho.update()
             return
         else:
             if pyxel.btn(pyxel.KEY_UP) or pyxel.btn(pyxel.GAMEPAD1_BUTTON_DPAD_UP):
@@ -143,6 +154,7 @@ class SushiGame:
         self.messages = [message for message in self.messages if message.alive]
 
 
+
     def draw(self):
         pyxel.cls(0)
 
@@ -152,6 +164,8 @@ class SushiGame:
 
         if self.is_gameover:
             self.draw_gameover()
+            if self.taisho:
+                self.taisho.draw()
             return
 
         self.draw_score()
@@ -207,6 +221,32 @@ class SushiGame:
         for i in range(1, -1, -1):
             color = 7 if i == 0 else 0
             pyxel.text(3 + i, 3, fscore, color)
+
+class Taisho:
+    def __init__(self, game):
+        self.game = (game,)
+        self.x = pyxel.rndi(0, WINDOW_WIDTH)
+        self.y = pyxel.rndi(0, WINDOW_HEIGHT)
+        self.dx = pyxel.rndi(1,4)
+        self.dy = pyxel.rndi(1,4)
+       
+        self.costume = 0
+
+    def update(self):
+        self.costume = (self.costume + 1) % 2
+        if self.x < 0 or WINDOW_WIDTH < self.x:
+            self.dx = self.dx * -1
+        if self.y < 0 or WINDOW_HEIGHT < self.y:
+            self.dy = self.dy * -1
+        
+        self.x += self.dx
+        self.y += self.dy
+    
+    def draw(self):
+        pyxel.blt(self.x - 4, self.y - 4, 0, 24, (self.costume % 2) * 8, 8, 8, 0)
+        
+
+
 
 class Player:
     def __init__(self, game, x=None, y=None):
