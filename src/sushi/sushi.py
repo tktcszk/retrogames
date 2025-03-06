@@ -55,6 +55,7 @@ class SushiGame:
         self.sushi_list = []
         self.messages = []
         self.player = None
+        self.taisho = None
         self.score = 0
         self.hit = False
         self.reset_game()
@@ -75,11 +76,21 @@ class SushiGame:
         if self.hit  > 0:
             self.hit -= 1
 
+        if self.is_title:
+            if pyxel.btnp(pyxel.KEY_UP) or pyxel.btnp(pyxel.GAMEPAD1_BUTTON_DPAD_UP):
+                self.is_title = False
+                self.is_gameover = False
+                self.reset_game()
+            return
         if self.is_title or self.is_gameover:
             if pyxel.btnp(pyxel.KEY_UP) or pyxel.btnp(pyxel.GAMEPAD1_BUTTON_DPAD_UP):
                 self.is_title = False
                 self.is_gameover = False
                 self.reset_game()
+            if not self.taisho:
+                self.taisho = Taisho(self)
+            else:
+                self.taisho.update()
             return
         else:
             if pyxel.btn(pyxel.KEY_UP) or pyxel.btn(pyxel.GAMEPAD1_BUTTON_DPAD_UP):
@@ -143,11 +154,8 @@ class SushiGame:
         self.messages = [message for message in self.messages if message.alive]
 
 
+
     def draw(self):
-        #if self.hit > 0:
-        #    pyxel.cls(pyxel.rndi(1,16))
-        #else:
-        #    pyxel.cls(0)
         pyxel.cls(0)
 
         if self.is_title:
@@ -156,6 +164,8 @@ class SushiGame:
 
         if self.is_gameover:
             self.draw_gameover()
+            if self.taisho:
+                self.taisho.draw()
             return
 
         self.draw_score()
@@ -186,21 +196,57 @@ class SushiGame:
             title_x = WINDOW_WIDTH / 2 - (len(GAME_TITLE) / 2) * 4
             pyxel.text(title_x, 20 + i, GAME_TITLE, color)
 
-        message = "GAME OVER"
+        message = "CHECKOUT!"
         message_x = WINDOW_WIDTH / 2 - (len(message) / 2) * 4
 
-        pyxel.text(message_x, 30 + i, message, 2)
+        pyxel.text(message_x, 30, message, 2)
+
+        message = f"YOU ATE {self.score:4} KAN OF SUSHI"
+        message_x = WINDOW_WIDTH / 2 - (len(message) / 2) * 4
+
+        pyxel.text(message_x, 40, message, 3)
+
+        message = f"BILL IS {self.score * 100:6} YEN"
+        message_x = WINDOW_WIDTH / 2 - (len(message) / 2) * 4
+
+        pyxel.text(message_x, 50, message, 3)
 
         message = "- Press Up Key -"
         message_x = WINDOW_WIDTH / 2 - (len(message) / 2) * 4
 
-        pyxel.text(message_x, 40 + i, message, 3)
+        pyxel.text(message_x, 60, message, 3)
 
     def draw_score(self):
-        fscore = f"SCORE:{self.score:04}"
+        fscore = f"{self.score:04} KAN"
         for i in range(1, -1, -1):
             color = 7 if i == 0 else 0
             pyxel.text(3 + i, 3, fscore, color)
+
+class Taisho:
+    def __init__(self, game):
+        self.game = (game,)
+        self.x = pyxel.rndi(0, WINDOW_WIDTH)
+        self.y = pyxel.rndi(0, WINDOW_HEIGHT)
+        self.dx = pyxel.rndi(1,4)
+        self.dy = pyxel.rndi(1,4)
+       
+        self.costume = 0
+
+    def update(self):
+        self.costume = (self.costume + 1) % 2
+        if self.x < 0 or WINDOW_WIDTH < self.x:
+            self.dx = self.dx * -1
+        if self.y < 0 or WINDOW_HEIGHT < self.y:
+            self.dy = self.dy * -1
+        
+        self.x += self.dx
+        self.y += self.dy
+    
+    def draw(self):
+        pyxel.blt(self.x - 4, self.y - 4, 0, 24, (self.costume % 2) * 8, 8, 8, 0)
+        
+
+
 
 class Player:
     def __init__(self, game, x=None, y=None):
