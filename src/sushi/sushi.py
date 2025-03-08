@@ -104,7 +104,7 @@ class SushiGame:
             if pyxel.btn(pyxel.KEY_LEFT) or pyxel.btn(pyxel.GAMEPAD1_BUTTON_DPAD_LEFT):
                 self.player.left()
 
-            if pyxel.btnp(pyxel.KEY_A) or pyxel.btnp(pyxel.GAMEPAD1_BUTTON_A):
+            if pyxel.btn(pyxel.KEY_A) or pyxel.btn(pyxel.GAMEPAD1_BUTTON_A):
                 self.player.speedup(True)
             else:
                 self.player.speedup(False)
@@ -285,7 +285,7 @@ class Player:
                 self._chopstick = None
 
     def speedup(self, flag):
-        self.speed = 7 if flag else 2
+        self.speed = 4 if flag else 2
 
     def move2(self, x, y):
         self.x = self.x + self.speed * x
@@ -394,8 +394,13 @@ class Chopstick:
     def __init__(self, x, y):
         self.x1 = x
         self.x2 = None
+        self.x3 = None
+        self.x4 = None
         self.y1 = y
         self.y2 = None
+        self.y3 = None
+        self.y4 = None
+
         self.x = None
         self.y = None
         self.size = 8
@@ -412,10 +417,18 @@ class Chopstick:
         self.y1 = y + math.cos(math.radians(30 * self.interval)) * 6
         self.x2 = self.x1 + math.sin(math.radians(30 * self.interval)) * self.length
         self.y2 = self.y1 + math.cos(math.radians(30 * self.interval)) * self.length
+
+        tweak = pyxel.rndi(0, 2) * 15 
+        self.x3 = x + math.sin(math.radians(30 * self.interval + tweak)) * 6
+        self.y3 = y + math.cos(math.radians(30 * self.interval + tweak)) * 6
+        self.x4 = self.x3 + math.sin(math.radians(30 * self.interval + tweak)) * self.length
+        self.y4 = self.y3 + math.cos(math.radians(30 * self.interval + tweak)) * self.length
+
         self.x, self.y = middle(self.x1, self.y1, self.x2, self.y2) 
     
     def draw(self):
         pyxel.line(self.x1, self.y1, self.x2, self.y2, 7)
+        pyxel.line(self.x3, self.y3, self.x4, self.y4, 7)
         pyxel.pset(self.x, self.y, 11)
 
 
