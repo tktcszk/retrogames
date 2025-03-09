@@ -120,7 +120,7 @@ class SushiGame:
         self.sushi_list = [sushi for sushi in self.sushi_list if sushi.alive]
 
         for sushi in self.sushi_list:
-            if is_overlapping(self.player, sushi) or (self.player._chopstick and is_overlapping(self.player._chopstick, sushi)):
+            if is_overlapping(self.player, sushi):
                 if sushi.spoiled:
                     pyxel.play(1, 1)
                     self.player.refresh()
@@ -140,7 +140,8 @@ class SushiGame:
                         gain = [1,1,1,1,2,2,2,3,3,4,6,12][pyxel.rndi(0,11)]
                         for x, y in circle(self.player.x, self.player.y, 20, gain):
                             self.sushi_list.append(Sushi(self, x, y, 1 if self.player.x < x else -1, 1 if self.player.y < y else -1))
-                        break
+            if self.player._chopstick and is_overlapping(self.player._chopstick, sushi):
+               sushi.chopstick = True
 
         if len(self.sushi_list) <= 0:
             self.is_gameover = True
@@ -152,7 +153,6 @@ class SushiGame:
             message.update()
 
         self.messages = [message for message in self.messages if message.alive]
-
 
 
     def draw(self):
@@ -326,6 +326,7 @@ class Sushi:
         self.spoil = pyxel.rndi(20, 50) * self.speed
         self.life = self.spoil + pyxel.rndi(15, 30)
         self.menu = pyxel.rndi(1, 3)
+        self.chopstick = False
 
     def change_direction(self):
         if self.direction_x == -1:
@@ -349,15 +350,22 @@ class Sushi:
         self.age += 1
         if self.age % (5 - self.speed) != 0:
             return
-        self.change_direction()
-        self.move()
-        if self.age > self.spoil:
-            self.spoiled = True
-            self.direction_x = 0
-            self.direction_y = 0
+        if not self.chopstick:
+            self.change_direction()
+            self.move()
+            if self.age > self.spoil:
+                self.spoiled = True
+                self.direction_x = 0
+                self.direction_y = 0
 
-        if self.age > self.life:
-            self.alive = False
+            if self.age > self.life:
+                self.alive = False
+        else:
+            if self.game.player.enough:
+                self.chopstick = False
+            else:
+                self.x += (self.game.player.x - self.x) / 2
+                self.y += (self.game.player.y - self.y) / 2
 
     def draw(self):
         if self.age < 3:
