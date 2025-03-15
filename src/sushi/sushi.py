@@ -291,6 +291,16 @@ class Player:
         self.x = self.x + self.speed * x
         self.y = self.y + self.speed * y
 
+        if self.x < 0:
+            self.x = 0
+        if self.x > WINDOW_WIDTH:
+            self.x = WINDOW_WIDTH
+        if self.y < 0:
+            self.y = 0
+        if self.y > WINDOW_HEIGHT:
+            self.y = WINDOW_HEIGHT
+
+
     def up(self):
         self.move2(0, -1)
 

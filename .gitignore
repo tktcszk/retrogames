@@ -1,2 +1,3 @@
 .venv
 *.pyxapp
+**/__pycache__/**
