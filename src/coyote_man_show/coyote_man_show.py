@@ -25,12 +25,35 @@ def direction(a, b, leave=False):
     return cmp(a.x, b.x) * (-1 if leave else 1), cmp(a.y, b.y) * (-1 if leave else 1)
 
 
-def is_overlapping(a, b):
+def __is_overlapping(a, b):
     x_overlap = a.x <= b.x <= a.x + a.size or a.x < b.x + b.size <= a.x + a.size
     y_overlap = a.y <= b.y <= a.y + a.size or a.y < b.y + b.size <= a.y + a.size
 
     return x_overlap and y_overlap
 
+def rectangles_overlap(a, b):
+    # a, b はそれぞれ4点のタプル（順序は (x1, y1), (x2, y1), (x1, y2), (x2, y2)）
+    
+    # a の x, y の最小・最大を求める
+    ax1 = min(a[0][0], a[2][0])
+    ax2 = max(a[1][0], a[3][0])
+    ay1 = min(a[0][1], a[1][1])
+    ay2 = max(a[2][1], a[3][1])
+
+    # b の x, y の最小・最大を求める
+    bx1 = min(b[0][0], b[2][0])
+    bx2 = max(b[1][0], b[3][0])
+    by1 = min(b[0][1], b[1][1])
+    by2 = max(b[2][1], b[3][1])
+
+    # 一方の矩形がもう一方の外側に完全にある場合、重ならない
+    if ax2 < bx1 or bx2 < ax1:
+        return False
+    if ay2 < by1 or by2 < ay1:
+        return False
+
+    # 上記で除外されなければ、重なっている
+    return True
 
 class CoyoteManShowGame:
     def __init__(self):
@@ -40,6 +63,8 @@ class CoyoteManShowGame:
         self.is_title = True
         self.is_gameover = False
         self.player = None
+        self.rakuda = None
+        self.chomin_list = []
         self.score = 0
         self.hit = False
         self.reset_game()
@@ -53,11 +78,16 @@ class CoyoteManShowGame:
 
     def reset_game(self):
         self.player = Player(self, WINDOW_WIDTH / 2 - 2, WINDOW_HEIGHT / 2 - 2)
+        self.rakuda = Rakuda(self, WINDOW_WIDTH / 2 - 2, WINDOW_HEIGHT / 2 - 2)
+
         self.score = 0
 
     def update(self):
         if self.hit  > 0:
             self.hit -= 1
+
+        if pyxel.rndi(0, 8) == 0:
+            self.chomin_list.append(Chomin(self))
 
         if self.is_title or self.is_gameover:
             if pyxel.btnp(pyxel.KEY_UP) or pyxel.btnp(pyxel.GAMEPAD1_BUTTON_DPAD_UP):
@@ -67,27 +97,36 @@ class CoyoteManShowGame:
             return
         else:
             if pyxel.btn(pyxel.KEY_UP) or pyxel.btn(pyxel.GAMEPAD1_BUTTON_DPAD_UP):
-                self.player.up()
+                self.rakuda.up()
             if pyxel.btn(pyxel.KEY_DOWN) or pyxel.btn(pyxel.GAMEPAD1_BUTTON_DPAD_DOWN):
-                self.player.down()
+                self.rakuda.down()
             if pyxel.btn(pyxel.KEY_RIGHT) or pyxel.btn(
                 pyxel.GAMEPAD1_BUTTON_DPAD_RIGHT
             ):
-                self.player.right()
+                self.rakuda.right()
             if pyxel.btn(pyxel.KEY_LEFT) or pyxel.btn(pyxel.GAMEPAD1_BUTTON_DPAD_LEFT):
-                self.player.left()
+                self.rakuda.left()
 
             if pyxel.btnp(pyxel.KEY_A) or pyxel.btnp(pyxel.GAMEPAD1_BUTTON_A):
-                self.player.speedup(True)
+                self.rakuda.speedup(True)
             else:
-                self.player.speedup(False)
+                self.rakuda.speedup(False)
 
         self.player.update()
+        self.rakuda.update()
+        chomin_list = []
+        for c in self.chomin_list:
+            c.update()
+            if c.alive:
+                chomin_list.append(c)
+        self.chomin_list = chomin_list
 
         if not self.player.alive:
             self.is_gameover = True
 
     def draw(self):
+        pyxel.cls(0)
+
         if self.hit > 0:
             pyxel.cls(pyxel.rndi(1,16))
         else:
@@ -103,7 +142,11 @@ class CoyoteManShowGame:
 
         self.draw_score()
 
-        self.player.draw()
+        # self.player.draw()
+        for c in self.chomin_list:
+            c.draw()
+
+        self.rakuda.draw()
 
     def draw_title(self):
         for i in range(1, -1, -1):
@@ -141,7 +184,7 @@ class CoyoteManShowGame:
 
 class Player:
     def __init__(self, game, x=None, y=None):
-        self.game = (game,)
+        self.game = game
         self.x = x if x else pyxel.rndi(0, WINDOW_WIDTH)
         self.y = y if y else pyxel.rndi(0, WINDOW_HEIGHT)
         self.speed = 2
@@ -150,6 +193,7 @@ class Player:
         self.alive = True
         self.eat_count = 0
         self.enough = False
+        self.rotate = 0
     
     def eat(self):
         self.eat_count += 1
@@ -164,6 +208,7 @@ class Player:
             self.costume = 1
         if self.eat_count > 5:
             self.enough = True
+        self.rotate += 5
 
     def speedup(self, flag):
         self.speed = 7 if flag else 2
@@ -185,6 +230,105 @@ class Player:
         self.move2(-1, 0)
 
     def draw(self):
-        pyxel.blt(self.x, self.y, 0, 0, (self.costume % 2) * 15, 12, 15, 0)
+        #   pyxel.blt(self.x, self.y, 0, 0, (self.costume % 2) * 15, 12, 15, 0)
+        pyxel.blt(self.x, self.y, 0, 0, 64, 8, 8, 0, self.rotate)
+
+
+class Rakuda:
+    def __init__(self, game, x=None, y=None):
+        self.game = game
+        self.speed = 2
+        self.direction = 1
+        self.x = x if x else pyxel.rndi(0, WINDOW_WIDTH)
+        self.y = y if y else pyxel.rndi(0, WINDOW_HEIGHT)
+        self.front_legs = 0
+        self.rear_legs = 0
+        self.stomp_points = []
+
+    def speedup(self, flag):
+        self.speed = 7 if flag else 2
+
+    def move2(self, x, y):
+        self.x = self.x + self.speed * x
+        self.y = self.y + self.speed * y
+
+    def up(self):
+        self.move2(0, -1)
+
+    def down(self):
+        self.move2(0, 1)
+
+    def right(self):
+        self.move2(1, 0)
+        self.direction = -1
+
+    def left(self):
+        self.move2(-1, 0)
+        self.direction = 1
+
+    def update(self):
+        self.front_legs = pyxel.rndi(0, 2)
+        self.rear_legs = pyxel.rndi(0, 2)
+
+        self.stomp_points = []
+        self.stomp_points.append(((self.x + 3, self.y + 39), (self.x + 16, self.y + 39), (self.x + 3, self.y + 40), (self.x + 16, self.y + 40)))
+
+    def draw(self):
+        pyxel.blt(self.x, self.y, 0, 0, 64, 24 * self.direction, 24, 0)
+        offset_y = 88
+        offset_leg_front = 0
+        offset_leg_rear = 16
+        offset_tail = 24
+
+        pyxel.blt(self.x + (0 if self.direction == 1 else 8), self.y + 24, 0, offset_leg_front, offset_y + (16 * self.front_legs), 16 * self.direction, 16, 0)
+        pyxel.blt(self.x + (16 if self.direction == 1 else -8), self.y + 24, 0, offset_leg_rear, offset_y + (16 * self.rear_legs), 16 * self.direction, 16, 0)
+        pyxel.blt(self.x + (24 if self.direction == 1 else -8), self.y + 16, 0, offset_tail, 80, 8 * self.direction, 8 * (-1 if pyxel.rndi(1, 2) == 1 else 1), 0)
+
+class Chomin:
+    def __init__(self, game, x=None, y=None):
+        self.game = game
+        self.speed = pyxel.rndi(1, 3)
+        self.direction = (-1) ** pyxel.rndi(0, 1)
+        self.x = WINDOW_WIDTH if self.direction == -1 else -8
+        self.y = y if y else pyxel.rndi(0, WINDOW_HEIGHT)
+        self.alive = True
+        self.stomped = False
+        self.byecount = 0
+
+    def update(self):
+        if self.stomped:
+            self.byecount -= 1
+            if self.byecount < 0:
+                self.alive = False
+        else:
+            self.x += self.direction * self.speed
+            if self.x < -8 or WINDOW_WIDTH < self.x:
+                self.alive = False
+
+        hit_area = (
+            (self.x + 1, self.y + 1),
+            (self.x + 6, self.y + 1),
+            (self.x + 6, self.y + 6),
+            (self.x + 1, self.y + 6),
+        )
+
+        for stomp_point in self.game.rakuda.stomp_points:
+            if rectangles_overlap(hit_area, stomp_point):
+                self.stomped = True
+                self.byecount = 4
+                break
+
+        
+
+    def draw(self):
+        costume = (-1) ** (0 if pyxel.frame_count % 8 <= 3 else 1)
+        if self.stomped:
+            pyxel.blt(self.x, self.y, 0, 0, 16, 8 * costume, 8, 0)
+        else:
+            pyxel.blt(self.x, self.y, 0, 0, 8, 8 * costume, 8, 0)
+
+
+
+
 
 CoyoteManShowGame()
