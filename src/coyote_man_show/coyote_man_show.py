@@ -82,25 +82,28 @@ class CoyoteManShowGame:
         self.init_sound()
         self.is_title = True
         self.is_gameover = False
-        self.player = None
         self.rakuda = None
         self.chomin_list = []
         self.score = 0
+        self.beam_count = 0
         self.hit = False
         self.reset_game()
+        self.bgm = None
 
         pyxel.run(self.update, self.draw)
 
     def init_sound(self):
         # Set sound effects
-        pyxel.sounds[0].set("a3a2c1a1", "p", "7", "s", 5)
-        pyxel.sounds[1].set("f3e2a1a1", "n", "7742", "s", 10)
+        pyxel.sounds[60].set("e2e1e2e1", "p", "7", "s", 5)
+        pyxel.sounds[61].set("c1g1c1g1", "p", "7", "s", 5)
+        pyxel.sounds[62].set("a3a2c1a1", "p", "7", "s", 5)
+        pyxel.sounds[63].set("f3e2a1a1", "n", "7742", "s", 10)
 
     def reset_game(self):
-        self.player = Player(self, WINDOW_WIDTH / 2 - 2, WINDOW_HEIGHT / 2 - 2)
         self.rakuda = Rakuda(self, WINDOW_WIDTH / 2 - 2, WINDOW_HEIGHT / 2 - 2)
-
+        self.chomin_list = []
         self.score = 0
+        self.beam_count = 0
 
     def update(self):
         if self.hit  > 0:
@@ -137,7 +140,6 @@ class CoyoteManShowGame:
             else:
                 self.rakuda.speedup(False)
 
-        self.player.update()
         self.rakuda.update()
         chomin_list = []
         for c in self.chomin_list:
@@ -146,8 +148,9 @@ class CoyoteManShowGame:
                 chomin_list.append(c)
         self.chomin_list = chomin_list
 
-        if not self.player.alive:
+        if not self.rakuda.alive:
             self.is_gameover = True
+            self.reset_game()
 
     def draw(self):
         pyxel.cls(0)
@@ -165,9 +168,11 @@ class CoyoteManShowGame:
             self.draw_gameover()
             return
 
-        self.draw_score()
+        pyxel.stop()
 
-        # self.player.draw()
+        self.draw_score()
+        self.draw_beam_count()
+
         for c in self.chomin_list:
             c.draw()
 
@@ -184,6 +189,9 @@ class CoyoteManShowGame:
         message_x = WINDOW_WIDTH / 2 - (len(message) / 2) * 4
 
         pyxel.text(message_x, 40 + i, message, 3)
+        if self.bgm is None:
+            self.bgm = 0
+            pyxel.playm(self.bgm, loop=True)
 
     def draw_gameover(self):
         for i in range(1, -1, -1):
@@ -207,57 +215,11 @@ class CoyoteManShowGame:
             color = 7 if i == 0 else 0
             pyxel.text(3 + i, 3, fscore, color)
 
-class Player:
-    def __init__(self, game, x=None, y=None):
-        self.game = game
-        self.x = x if x else pyxel.rndi(0, WINDOW_WIDTH)
-        self.y = y if y else pyxel.rndi(0, WINDOW_HEIGHT)
-        self.speed = 2
-        self.size = 8
-        self.costume = 1
-        self.alive = True
-        self.eat_count = 0
-        self.enough = False
-        self.rotate = 0
-    
-    def eat(self):
-        self.eat_count += 1
-    
-    def refresh(self):
-        self.eat_count = 0
-        self.enough = False
-
-    def update(self):
-        self.costume = self.costume + 1
-        if self.costume > 4:
-            self.costume = 1
-        if self.eat_count > 5:
-            self.enough = True
-        self.rotate += 5
-
-    def speedup(self, flag):
-        self.speed = 7 if flag else 2
-
-    def move2(self, x, y):
-        self.x = self.x + self.speed * x
-        self.y = self.y + self.speed * y
-
-    def up(self):
-        self.move2(0, -1)
-
-    def down(self):
-        self.move2(0, 1)
-
-    def right(self):
-        self.move2(1, 0)
-
-    def left(self):
-        self.move2(-1, 0)
-
-    def draw(self):
-        #   pyxel.blt(self.x, self.y, 0, 0, (self.costume % 2) * 15, 12, 15, 0)
-        pyxel.blt(self.x, self.y, 0, 0, 64, 8, 8, 0, self.rotate)
-
+    def draw_beam_count(self):
+        fscore = f"BEAM:{self.beam_count:02}"
+        for i in range(1, -1, -1):
+            color = 7 if i == 0 else 0
+            pyxel.text(WINDOW_WIDTH - 30 + i, 3, fscore, color)
 
 class Beam:
     def __init__(self, x, y):
@@ -267,16 +229,18 @@ class Beam:
         self.alive = True
     
     def update(self):
-        self.r += 4
-        if self.r > 25:
+        self.r += 7
+        if self.r > 40:
             self.alive = False
     
     def draw(self):
+        pyxel.play(3, 60)
         pyxel.circb(self.x, self.y, self.r, pyxel.rndi(0,8))
 
 class Rakuda:
     def __init__(self, game, x=None, y=None):
         self.game = game
+        self.alive = True
         self.speed = 2
         self.direction = 1
         self.x = x if x else pyxel.rndi(0, WINDOW_WIDTH)
@@ -290,10 +254,12 @@ class Rakuda:
         self.speed = 7 if flag else 2
 
     def beam(self):
-        x = self.x + 24 if self.direction == 1 else self.x
-        y = self.y
+        if self.game.beam_count > 0:
+            x = self.x + 24 if self.direction == 1 else self.x
+            y = self.y
 
-        self.beams.append(Beam(x, y))
+            self.beams.append(Beam(x, y))
+            self.game.beam_count -= 1
         
 
     def move2(self, x, y):
@@ -339,6 +305,9 @@ class Rakuda:
         pyxel.blt(self.x + (16 if self.direction == -1 else -8), self.y + 24, 0, offset_leg_rear, offset_y + (16 * self.rear_legs), 16 * self.direction * -1, 16, 0)
         pyxel.blt(self.x + (24 if self.direction == -1 else -8), self.y + 16, 0, offset_tail, 80, 8 * self.direction * -1, 8 * (-1 if pyxel.rndi(1, 2) == 1 else 1), 0)
 
+        if self.speed > 5:
+            pyxel.play(3, 61)
+
         for b in self.beams:
             b.draw()
 
@@ -358,6 +327,7 @@ class Chomin:
         self.byecount = 0
         self.shocked = False
         self.shockcount = 0
+        self.armed = True if self.mode == 0 and pyxel.rndi(0, 4) == 0 else False
 
     def update(self):
         self.age += 1
@@ -369,6 +339,9 @@ class Chomin:
                     for x, y in circle(self.x, self.y, 20, gain):
                         self.game.chomin_list.append(Chomin(self.game, x, y, self.mode + 1))
                 self.alive = False
+                self.game.score += 1
+                if self.game.score % 5 == 0:
+                    self.game.beam_count += 1
         else:
             if self.shocked:
                 self.shockcount -= 1
@@ -394,25 +367,26 @@ class Chomin:
         if not self.stomped:
             for stomp_point in self.game.rakuda.stomp_points:
                 if rectangles_overlap(hit_area, stomp_point):
-                    pyxel.play(1, 1)
-                    self.stomped = True
-                    self.byecount = 1
+                    if self.armed and not self.shocked:
+                        self.game.rakuda.alive = False
+                        pyxel.play(2, 63)
+                    else:
+                        self.stomped = True
+                        self.byecount = 1
                     break
 
         for beam in self.game.rakuda.beams:
             if circle_overlap((self.x, self.y, 4), (beam.x, beam.y, beam.r)):
                 self.shocked = True
-                self.shockcount = pyxel.rndi(4, 10)
+                self.shockcount = pyxel.rndi(8, 20)
                 break
 
     def draw(self):
-        if self.mode >= 1 and self.age < 4:
-            return
-
         if self.mode == 0:
             costume = (-1) ** (0 if pyxel.frame_count % 8 <= 3 else 1)
             if self.stomped:
                 pyxel.blt(self.x, self.y, 0, 0, 16, 8 * costume, 8, 0)
+                pyxel.play(2, 62)
             else:
                 if self.shocked:
                     pyxel.blt(self.x, self.y, 0, 0, 8, 8 * costume, -8, 0)
@@ -420,12 +394,20 @@ class Chomin:
                 else:
                     pyxel.blt(self.x, self.y, 0, 0, 8, 8 * costume, 8, 0)
                     pyxel.line(self.x + 3, self.y - 1, self.x + 3, self.y, 4)
+                    if self.armed:
+                        idx = self.age % 4
+                        katana = [0, 1, 2, 1]
+                        if self.direction == 1:
+                            pyxel.blt(self.x + 8, self.y + 1, 0, 0, 24 + 8 * katana[idx], -8, 8, 0)
+                        else:
+                            pyxel.blt(self.x - 8, self.y + 1, 0, 0, 24 + 8 * katana[idx], 8, 8, 0)
         else:
             if self.age < 6:
-                pyxel.pset(self.x + 3 , self.y + 3, 8)
+                pyxel.pset(self.x, self.y, pyxel.rndi(1, 17))
             else:
                 if self.stomped:
                     pyxel.blt(self.x, self.y, 0, self.mode * 8, 16, 8, 8, 0)
+                    pyxel.play(2, 62)
                 else:
                     pyxel.blt(self.x, self.y, 0, self.mode * 8, 8, 8, 8, 0)
 
