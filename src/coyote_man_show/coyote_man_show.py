@@ -394,6 +394,7 @@ class Chomin:
         if not self.stomped:
             for stomp_point in self.game.rakuda.stomp_points:
                 if rectangles_overlap(hit_area, stomp_point):
+                    pyxel.play(1, 1)
                     self.stomped = True
                     self.byecount = 1
                     break
