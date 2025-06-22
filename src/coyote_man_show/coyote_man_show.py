@@ -55,6 +55,26 @@ def rectangles_overlap(a, b):
     # 上記で除外されなければ、重なっている
     return True
 
+def circle_overlap(a, b):
+    ax, ay, ar = a
+    bx, by, br = b
+
+    # 中心点間の距離
+    distance = math.hypot(ax - bx, ay - by)
+
+    # 半径の和
+    radius_sum = ar + br
+
+    # 距離が半径の和以下なら重なる
+    return distance <= radius_sum
+
+def circle(x, y, r, p):
+    interval = 360 / p
+    d = 0
+    while d < 360:
+        yield x + math.sin(math.radians(d)) * r, y + math.cos(math.radians(d)) * r
+        d += interval
+
 class CoyoteManShowGame:
     def __init__(self):
         pyxel.init(WINDOW_WIDTH, WINDOW_HEIGHT, title=GAME_TITLE, fps=10)
@@ -104,10 +124,15 @@ class CoyoteManShowGame:
                 pyxel.GAMEPAD1_BUTTON_DPAD_RIGHT
             ):
                 self.rakuda.right()
+
             if pyxel.btn(pyxel.KEY_LEFT) or pyxel.btn(pyxel.GAMEPAD1_BUTTON_DPAD_LEFT):
                 self.rakuda.left()
 
-            if pyxel.btnp(pyxel.KEY_A) or pyxel.btnp(pyxel.GAMEPAD1_BUTTON_A):
+            if pyxel.btn(pyxel.KEY_B) or pyxel.btn(pyxel.GAMEPAD1_BUTTON_B):
+                self.rakuda.beam()
+
+
+            if pyxel.btn(pyxel.KEY_A) or pyxel.btn(pyxel.GAMEPAD1_BUTTON_A):
                 self.rakuda.speedup(True)
             else:
                 self.rakuda.speedup(False)
@@ -234,6 +259,21 @@ class Player:
         pyxel.blt(self.x, self.y, 0, 0, 64, 8, 8, 0, self.rotate)
 
 
+class Beam:
+    def __init__(self, x, y):
+        self.r = 0
+        self.x = x
+        self.y = y
+        self.alive = True
+    
+    def update(self):
+        self.r += 4
+        if self.r > 25:
+            self.alive = False
+    
+    def draw(self):
+        pyxel.circb(self.x, self.y, self.r, pyxel.rndi(0,8))
+
 class Rakuda:
     def __init__(self, game, x=None, y=None):
         self.game = game
@@ -244,9 +284,17 @@ class Rakuda:
         self.front_legs = 0
         self.rear_legs = 0
         self.stomp_points = []
+        self.beams = []
 
     def speedup(self, flag):
         self.speed = 7 if flag else 2
+
+    def beam(self):
+        x = self.x + 24 if self.direction == 1 else self.x
+        y = self.y
+
+        self.beams.append(Beam(x, y))
+        
 
     def move2(self, x, y):
         self.x = self.x + self.speed * x
@@ -260,11 +308,11 @@ class Rakuda:
 
     def right(self):
         self.move2(1, 0)
-        self.direction = -1
+        self.direction = 1
 
     def left(self):
         self.move2(-1, 0)
-        self.direction = 1
+        self.direction = -1
 
     def update(self):
         self.front_legs = pyxel.rndi(0, 2)
@@ -273,36 +321,67 @@ class Rakuda:
         self.stomp_points = []
         self.stomp_points.append(((self.x + 3, self.y + 39), (self.x + 16, self.y + 39), (self.x + 3, self.y + 40), (self.x + 16, self.y + 40)))
 
+        beams = []
+        for b in self.beams:
+            b.update()
+            if b.alive:
+                beams.append(b)
+        self.beams = beams
+
     def draw(self):
-        pyxel.blt(self.x, self.y, 0, 0, 64, 24 * self.direction, 24, 0)
+        pyxel.blt(self.x, self.y, 0, 0, 64, 24 * self.direction * -1, 24, 0)
         offset_y = 88
         offset_leg_front = 0
         offset_leg_rear = 16
         offset_tail = 24
 
-        pyxel.blt(self.x + (0 if self.direction == 1 else 8), self.y + 24, 0, offset_leg_front, offset_y + (16 * self.front_legs), 16 * self.direction, 16, 0)
-        pyxel.blt(self.x + (16 if self.direction == 1 else -8), self.y + 24, 0, offset_leg_rear, offset_y + (16 * self.rear_legs), 16 * self.direction, 16, 0)
-        pyxel.blt(self.x + (24 if self.direction == 1 else -8), self.y + 16, 0, offset_tail, 80, 8 * self.direction, 8 * (-1 if pyxel.rndi(1, 2) == 1 else 1), 0)
+        pyxel.blt(self.x + (0 if self.direction == -1 else 8), self.y + 24, 0, offset_leg_front, offset_y + (16 * self.front_legs), 16 * self.direction * -1, 16, 0)
+        pyxel.blt(self.x + (16 if self.direction == -1 else -8), self.y + 24, 0, offset_leg_rear, offset_y + (16 * self.rear_legs), 16 * self.direction * -1, 16, 0)
+        pyxel.blt(self.x + (24 if self.direction == -1 else -8), self.y + 16, 0, offset_tail, 80, 8 * self.direction * -1, 8 * (-1 if pyxel.rndi(1, 2) == 1 else 1), 0)
+
+        for b in self.beams:
+            b.draw()
+
+
 
 class Chomin:
-    def __init__(self, game, x=None, y=None):
+    def __init__(self, game, x=None, y=None, mode=0):
         self.game = game
         self.speed = pyxel.rndi(1, 3)
         self.direction = (-1) ** pyxel.rndi(0, 1)
-        self.x = WINDOW_WIDTH if self.direction == -1 else -8
+        self.x = x or (WINDOW_WIDTH if self.direction == -1 else -8)
         self.y = y if y else pyxel.rndi(0, WINDOW_HEIGHT)
+        self.mode = mode
+        self.age = 0
         self.alive = True
         self.stomped = False
         self.byecount = 0
+        self.shocked = False
+        self.shockcount = 0
 
     def update(self):
+        self.age += 1
         if self.stomped:
             self.byecount -= 1
             if self.byecount < 0:
+                if self.mode <= 3:
+                    gain = [1,1,1,1,2,2,2,3,3,4,6,12][pyxel.rndi(0,11)]
+                    for x, y in circle(self.x, self.y, 20, gain):
+                        self.game.chomin_list.append(Chomin(self.game, x, y, self.mode + 1))
                 self.alive = False
         else:
-            self.x += self.direction * self.speed
-            if self.x < -8 or WINDOW_WIDTH < self.x:
+            if self.shocked:
+                self.shockcount -= 1
+                if self.shockcount <= 0:
+                    self.shocked = False
+            else:
+                if self.mode == 0:
+                    self.x += self.direction * self.speed
+                    if self.x < -8 or WINDOW_WIDTH < self.x:
+                        self.alive = False
+
+        if self.mode > 0:
+            if self.age >= pyxel.rndi(15, 30):
                 self.alive = False
 
         hit_area = (
@@ -312,21 +391,42 @@ class Chomin:
             (self.x + 1, self.y + 6),
         )
 
-        for stomp_point in self.game.rakuda.stomp_points:
-            if rectangles_overlap(hit_area, stomp_point):
-                self.stomped = True
-                self.byecount = 4
+        if not self.stomped:
+            for stomp_point in self.game.rakuda.stomp_points:
+                if rectangles_overlap(hit_area, stomp_point):
+                    self.stomped = True
+                    self.byecount = 1
+                    break
+
+        for beam in self.game.rakuda.beams:
+            if circle_overlap((self.x, self.y, 4), (beam.x, beam.y, beam.r)):
+                self.shocked = True
+                self.shockcount = pyxel.rndi(4, 10)
                 break
 
-        
-
     def draw(self):
-        costume = (-1) ** (0 if pyxel.frame_count % 8 <= 3 else 1)
-        if self.stomped:
-            pyxel.blt(self.x, self.y, 0, 0, 16, 8 * costume, 8, 0)
-        else:
-            pyxel.blt(self.x, self.y, 0, 0, 8, 8 * costume, 8, 0)
+        if self.mode >= 1 and self.age < 4:
+            return
 
+        if self.mode == 0:
+            costume = (-1) ** (0 if pyxel.frame_count % 8 <= 3 else 1)
+            if self.stomped:
+                pyxel.blt(self.x, self.y, 0, 0, 16, 8 * costume, 8, 0)
+            else:
+                if self.shocked:
+                    pyxel.blt(self.x, self.y, 0, 0, 8, 8 * costume, -8, 0)
+                    pyxel.line(self.x + 3, self.y + 7, self.x + 3, self.y + 8, 4)
+                else:
+                    pyxel.blt(self.x, self.y, 0, 0, 8, 8 * costume, 8, 0)
+                    pyxel.line(self.x + 3, self.y - 1, self.x + 3, self.y, 4)
+        else:
+            if self.age < 6:
+                pyxel.pset(self.x + 3 , self.y + 3, 8)
+            else:
+                if self.stomped:
+                    pyxel.blt(self.x, self.y, 0, self.mode * 8, 16, 8, 8, 0)
+                else:
+                    pyxel.blt(self.x, self.y, 0, self.mode * 8, 8, 8, 8, 0)
 
 
 
