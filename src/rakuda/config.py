@@ -1,0 +1,3 @@
+TITLE = "らくだのかんかんのう"
+WINDOW_WIDTH = 128
+WINDOW_HEIGHT = 128
