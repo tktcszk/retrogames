@@ -1,6 +1,6 @@
 import pyxel
 import config
-from entities import Fugu, Rakuda
+from entities import Fugu, Rakuda, Tobo
 
 class PlayScene:
     def __init__(self, game):
@@ -26,6 +26,10 @@ class PlayScene:
         if pyxel.rndi(0,8) == 0:
             fugu = Fugu(self, pyxel.rndi(0, config.WINDOW_WIDTH), pyxel.rndi(0, config.WINDOW_HEIGHT))
             self.entities.append(fugu)
+
+        if pyxel.rndi(0,64) == 0:
+            tobo = Tobo(self, pyxel.rndi(0, config.WINDOW_WIDTH), pyxel.rndi(0, config.WINDOW_HEIGHT))
+            self.entities.append(tobo)
 
         entities = []
         for entity in self.entities:

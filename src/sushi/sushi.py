@@ -59,13 +59,15 @@ class SushiGame:
         self.score = 0
         self.hit = False
         self.reset_game()
+        self.music = None
+        self.playing = False
 
         pyxel.run(self.update, self.draw)
 
     def init_sound(self):
         # Set sound effects
-        pyxel.sounds[0].set("a3a2c1a1", "p", "7", "s", 5)
-        pyxel.sounds[1].set("f3e2a1a1", "n", "7742", "s", 10)
+        pyxel.sounds[62].set("a3a2c1a1", "p", "7", "s", 5)
+        pyxel.sounds[63].set("f3e2a1a1", "n", "7742", "s", 10)
 
     def reset_game(self):
         self.player = Player(self, WINDOW_WIDTH / 2 - 2, WINDOW_HEIGHT / 2 - 2)
@@ -83,6 +85,10 @@ class SushiGame:
                 self.reset_game()
             return
         if self.is_title or self.is_gameover:
+            if self.playing:
+                pyxel.stop()
+                self.playing = False
+
             if pyxel.btnp(pyxel.KEY_UP) or pyxel.btnp(pyxel.GAMEPAD1_BUTTON_DPAD_UP):
                 self.is_title = False
                 self.is_gameover = False
@@ -93,6 +99,10 @@ class SushiGame:
                 self.taisho.update()
             return
         else:
+            if not self.playing:
+                pyxel.playm(0, loop=True)
+                self.playing = True
+
             if pyxel.btn(pyxel.KEY_UP) or pyxel.btn(pyxel.GAMEPAD1_BUTTON_DPAD_UP):
                 self.player.up()
             if pyxel.btn(pyxel.KEY_DOWN) or pyxel.btn(pyxel.GAMEPAD1_BUTTON_DPAD_DOWN):
@@ -122,7 +132,7 @@ class SushiGame:
         for sushi in self.sushi_list:
             if is_overlapping(self.player, sushi):
                 if sushi.spoiled:
-                    pyxel.play(1, 1)
+                    pyxel.play(3, 63, resume=True)
                     self.player.refresh()
                     sushi.alive = False
                     self.hit = 5
@@ -135,7 +145,7 @@ class SushiGame:
                         self.score += 1
                         self.player.eat()
                         self.messages.append(Message(MENU[sushi.menu], sushi.x, sushi.y, 4))
-                        pyxel.play(0, 1)
+                        pyxel.play(3, 62, resume=True)
                         sushi.alive = False
                         gain = [1,1,1,1,2,2,2,3,3,4,6,12][pyxel.rndi(0,11)]
                         for x, y in circle(self.player.x, self.player.y, 20, gain):

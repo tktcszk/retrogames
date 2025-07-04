@@ -116,6 +116,7 @@ class CoyoteManShowGame:
             if pyxel.btnp(pyxel.KEY_UP) or pyxel.btnp(pyxel.GAMEPAD1_BUTTON_DPAD_UP):
                 self.is_title = False
                 self.is_gameover = False
+                self.bgm = None
                 self.reset_game()
             return
         else:
@@ -168,7 +169,11 @@ class CoyoteManShowGame:
             self.draw_gameover()
             return
 
-        pyxel.stop()
+        
+        if self.bgm is None:
+            pyxel.stop()
+            self.bgm = 1
+            pyxel.playm(self.bgm, loop=True)
 
         self.draw_score()
         self.draw_beam_count()
@@ -234,7 +239,7 @@ class Beam:
             self.alive = False
     
     def draw(self):
-        pyxel.play(3, 60)
+        pyxel.play(3, 60, resume=True)
         pyxel.circb(self.x, self.y, self.r, pyxel.rndi(0,8))
 
 class Rakuda:
@@ -306,7 +311,7 @@ class Rakuda:
         pyxel.blt(self.x + (24 if self.direction == -1 else -8), self.y + 16, 0, offset_tail, 80, 8 * self.direction * -1, 8 * (-1 if pyxel.rndi(1, 2) == 1 else 1), 0)
 
         if self.speed > 5:
-            pyxel.play(3, 61)
+            pyxel.play(3, 61, resume=True)
 
         for b in self.beams:
             b.draw()
@@ -369,7 +374,7 @@ class Chomin:
                 if rectangles_overlap(hit_area, stomp_point):
                     if self.armed and not self.shocked:
                         self.game.rakuda.alive = False
-                        pyxel.play(2, 63)
+                        pyxel.play(3, 63, resume=True)
                     else:
                         self.stomped = True
                         self.byecount = 1
@@ -386,7 +391,7 @@ class Chomin:
             costume = (-1) ** (0 if pyxel.frame_count % 8 <= 3 else 1)
             if self.stomped:
                 pyxel.blt(self.x, self.y, 0, 0, 16, 8 * costume, 8, 0)
-                pyxel.play(2, 62)
+                pyxel.play(3, 62, resume=True)
             else:
                 if self.shocked:
                     pyxel.blt(self.x, self.y, 0, 0, 8, 8 * costume, -8, 0)
@@ -407,7 +412,7 @@ class Chomin:
             else:
                 if self.stomped:
                     pyxel.blt(self.x, self.y, 0, self.mode * 8, 16, 8, 8, 0)
-                    pyxel.play(2, 62)
+                    pyxel.play(3, 62, resume=True)
                 else:
                     pyxel.blt(self.x, self.y, 0, self.mode * 8, 8, 8, 8, 0)
 

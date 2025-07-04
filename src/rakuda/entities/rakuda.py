@@ -27,6 +27,7 @@ class Rakuda:
     
     def cut(self):
         if self.knife_count > 0:
+
             return (
                 (self.x - 4, self.y + 1),
                 (self.x + 12, self.y + 1),
@@ -60,7 +61,7 @@ class Rakuda:
         self.direction = -1
 
     def knife(self):
-        self.knife_count = 3
+        self.knife_count = 8
 
     def update(self):
         self.age += 1
@@ -87,8 +88,20 @@ class Rakuda:
 
         # arms
         if self.knife_count != 0:
-            pyxel.blt(self.x - 7, self.y + 1, 0, 32, 32, 8, 8, 0)
+            offset_x = 32
+            offset_y = 40
+            degree = 45 * self.knife_count
+            pyxel.blt(self.x - 8, self.y, 0, offset_x, offset_y, 16, 16, 0, degree)
             pyxel.blt(self.x + 7, self.y + 1, 0, 40, 32, 8, 8, 0)
+
+            degree2 = 45 * (self.knife_count - 1)
+
+            pyxel.line(
+                self.x + pyxel.cos(degree) + 8, self.y + 8 + pyxel.sin(degree),
+                self.x + pyxel.cos(degree2) + 8, self.y + 8 + pyxel.sin(degree2),
+                7)
+
+
         else:
             v = 16 + (8 * (self.age % 2))
             pyxel.blt(self.x - 8, self.y + 8 , 0, 32, v, 8, 8, 0)
@@ -97,3 +110,4 @@ class Rakuda:
         # legs
         v = 24 + 8 * [0,1,0,2][self.age % 4]
         pyxel.blt(self.x, self.y + 16 , 0, 24, v, 8, 8, 0)
+

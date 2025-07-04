@@ -1,4 +1,5 @@
 import pyxel
+from entities import Tobo2, Hero
 
 class DQScene:
     def __init__(self, game):
@@ -13,6 +14,16 @@ class DQScene:
         self.message_template = None
         self.message = []
         self.next_message = False
+        self.entities = []
+        self.tobo2 = Tobo2(self, 48, 48)
+        self.hero = Hero(self, 64, 64)
+
+        self.entities.append(self.tobo2)
+        self.entities.append(self.hero)
+        self.is_animation = False
+        self.animation_list = list(reversed([
+            (-1,0),(-1,0),(-1,0),(-2,0),(-3,0),(-4,0),(-4,0),(0,-4),(0,4),(0,-4),(0,4),(0,-4),(0,4)
+            ]))
 
     def reset(self):
         self.age = 0
@@ -36,6 +47,13 @@ class DQScene:
 
         if self.age < 20:
             return
+        
+        if self.is_animation:
+            if len(self.animation_list) > 0:
+                move = self.animation_list.pop()
+                self.hero.x += move[0]
+                self.hero.y += move[1]
+
         
         if len(self.message_template) > 0:
             ch = self.message_template.pop()
@@ -62,7 +80,13 @@ class DQScene:
             if self.message_template_idx < len(self.message_template_list):
                 self.next_message = True
             else:
-                self.game.notify(self, "title")
+                if not self.is_animation:
+                    self.is_animation = True
+                else:
+                    self.game.notify(self, "title")
+
+        for entity in self.entities:
+            entity.update()
 
 
     def draw(self):
@@ -75,4 +99,7 @@ class DQScene:
             pyxel.rect(6, 82, 116, 36, 0)
             for idx, message in enumerate(self.message):
                 pyxel.text(8, 84  + idx * 10, "".join(message), 7, self.game.font)
-        
+
+        for entity in self.entities:
+            entity.draw()
+
