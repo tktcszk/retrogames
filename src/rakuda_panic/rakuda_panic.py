@@ -1,7 +1,7 @@
 import pyxel
 import math
 
-GAME_TITLE = "COYOTE MAN SHOW"
+GAME_TITLE = "RAKUDA PANIC"
 WINDOW_WIDTH = 100
 WINDOW_HEIGHT = 100
 INITIAL_COUNT = 4
@@ -78,7 +78,7 @@ def circle(x, y, r, p):
 class CoyoteManShowGame:
     def __init__(self):
         pyxel.init(WINDOW_WIDTH, WINDOW_HEIGHT, title=GAME_TITLE, fps=10)
-        pyxel.load("coyote_man_show.pyxres")
+        pyxel.load("rakuda_panic.pyxres")
         self.init_sound()
         self.is_title = True
         self.is_gameover = False
@@ -383,7 +383,7 @@ class Chomin:
         for beam in self.game.rakuda.beams:
             if circle_overlap((self.x, self.y, 4), (beam.x, beam.y, beam.r)):
                 self.shocked = True
-                self.shockcount = pyxel.rndi(8, 20)
+                self.shockcount = pyxel.rndi(18, 38)
                 break
 
     def draw(self):
@@ -394,8 +394,13 @@ class Chomin:
                 pyxel.play(3, 62, resume=True)
             else:
                 if self.shocked:
-                    pyxel.blt(self.x, self.y, 0, 0, 8, 8 * costume, -8, 0)
-                    pyxel.line(self.x + 3, self.y + 7, self.x + 3, self.y + 8, 4)
+                    if self.shockcount > 8:
+                        pyxel.blt(self.x, self.y, 0, 0, 8, 8 * costume, -8, 0)
+                        pyxel.line(self.x + 3, self.y + 7, self.x + 3, self.y + 8, 4)
+                    else:
+                        pyxel.blt(self.x + (-2, 0, 2, 0, -1, 0, 1)[pyxel.frame_count % 7], self.y, 0, 0, 8, 8 * costume, -8, 0)
+                        pyxel.line(self.x + 3 + (-2, 0, 2, 0, -1, 0, 1)[pyxel.frame_count % 7], self.y + 7, self.x + 3, self.y + 8, 4)
+
                 else:
                     pyxel.blt(self.x, self.y, 0, 0, 8, 8 * costume, 8, 0)
                     pyxel.line(self.x + 3, self.y - 1, self.x + 3, self.y, 4)
