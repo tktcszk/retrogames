@@ -37,21 +37,23 @@ class Game:
             s.stop()
         start.start()
         self.current_scene = scene_name
+        return start
 
     def notify(self, scene, message, option={}):
         if scene is self.scenes["standby"]:
-            if message == "start":
-                self.start_scene("title")
-        elif scene is self.scenes["title"]:
-            if message == "keypress":
+            if message == "play":
                 self.start_scene("play")
+            if message == "title":
+                self.start_scene("title")
         elif scene is self.scenes["play"]:
             if message == "gameover":
                 self.start_scene("dq")
         elif scene is self.scenes["dq"]:
-            if message == "title":
-                pyxel.exit()
-                #self.start_scene("title")
+            if message == "standby":
+                self.start_scene("standby")
+        elif scene is self.scenes["title"]:
+            if message == "keypress":
+                self.start_scene("standby")
         return
 
     def init_sound(self):
@@ -63,10 +65,10 @@ class Game:
 
     def update(self):
         current_scene = self.get_current_scene()
-        if current_scene:
-            current_scene.update()
-        else:
-            self.start_scene("standby")
+        if not current_scene:
+            current_scene = self.start_scene("standby")
+
+        current_scene.update()
 
     def draw(self):
         current_scene = self.get_current_scene()

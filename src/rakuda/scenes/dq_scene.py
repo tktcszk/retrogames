@@ -22,8 +22,10 @@ class DQScene:
         self.entities.append(self.hero)
         self.is_animation = False
         self.animation_list = list(reversed([
-            (-1,0),(-1,0),(-1,0),(-2,0),(-3,0),(-4,0),(-4,0),(0,-4),(0,4),(0,-4),(0,4),(0,-4),(0,4)
+            (-1,0),(-1,0),(-1,0),(-2,0),(-3,0),(-4,0),(-4,0),(0,-4),(0,4),(0,-4),(0,4),(0,-4),(0,4),(0,4),(0,0),(0,0),(0,0),(0,0),(0,0),(0,0),(0,0),(0,0),(0,0)
             ]))
+        
+        self.dither_count = 0
 
     def reset(self):
         self.age = 0
@@ -41,6 +43,7 @@ class DQScene:
 
     def stop(self):
         pyxel.stop()
+        pyxel.dither(1)
 
     def update(self):
         self.age += 1
@@ -49,10 +52,16 @@ class DQScene:
             return
         
         if self.is_animation:
+            self.message = ""
             if len(self.animation_list) > 0:
                 move = self.animation_list.pop()
                 self.hero.x += move[0]
                 self.hero.y += move[1]
+            else:
+                if self.dither_count < 7:
+                    self.dither_count += 1
+                else:
+                    self.game.notify(self, "standby")
 
         
         if len(self.message_template) > 0:
@@ -82,8 +91,6 @@ class DQScene:
             else:
                 if not self.is_animation:
                     self.is_animation = True
-                else:
-                    self.game.notify(self, "title")
 
         for entity in self.entities:
             entity.update()
@@ -92,6 +99,8 @@ class DQScene:
     def draw(self):
         pyxel.cls(0)
         pyxel.bltm(0, 0, 0, 0, 0, 128, 128, 0)
+        if self.dither_count > 0:
+            pyxel.dither(1 / [1, 2, 4, 8, 16, 32, 64, 128][self.dither_count])
 
         if self.has_message():
             pyxel.rectb(4, 80, 120, 40, 0)

@@ -56,4 +56,14 @@ class PlayScene:
         pyxel.cls(0)
         for entity in self.entities:
             entity.draw()
-        pass
+
+        bar_w = config.WINDOW_WIDTH - 16
+        pyxel.rect(8, config.WINDOW_HEIGHT - 16, bar_w, 8, 6)
+        if self.rakuda.damage > 0:
+
+            damage = self.rakuda.damage
+            c = 10 if damage < 22 else 8
+            w = bar_w if damage > 24 else damage * (bar_w / 23)
+            offset_x = bar_w - w
+            pyxel.rect(8 + offset_x, config.WINDOW_HEIGHT - 16, w, 8, c)
+        
