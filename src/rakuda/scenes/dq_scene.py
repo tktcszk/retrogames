@@ -10,8 +10,16 @@ class DQScene:
             list(reversed(list("ここからはなまのらくごをおたのしみください"))),
         ]
 
-        self.message_template_idx = None
-        self.message_template = None
+        self.animation_list = list(reversed([
+            (-1,0),(-1,0),(-1,0),(-2,0),(-3,0),(-4,0),(-4,0),(0,-4),(0,4),(0,-4),(0,4),(0,-4),(0,4),(0,4),(0,0),(0,0),(0,0),(0,0),(0,0),(0,0),(0,0),(0,0),(0,0)
+            ]))
+        
+        self.reset()
+
+    def reset(self):
+        self.age = 0
+        self.message_template_idx = 0
+        self.message_template = self.message_template_list[self.message_template_idx]
         self.message = []
         self.next_message = False
         self.entities = []
@@ -21,18 +29,8 @@ class DQScene:
         self.entities.append(self.tobo2)
         self.entities.append(self.hero)
         self.is_animation = False
-        self.animation_list = list(reversed([
-            (-1,0),(-1,0),(-1,0),(-2,0),(-3,0),(-4,0),(-4,0),(0,-4),(0,4),(0,-4),(0,4),(0,-4),(0,4),(0,4),(0,0),(0,0),(0,0),(0,0),(0,0),(0,0),(0,0),(0,0),(0,0)
-            ]))
         
         self.dither_count = 0
-
-    def reset(self):
-        self.age = 0
-        self.message_template_idx = 0
-        self.message_template = self.message_template_list[self.message_template_idx]
-        self.message = []
-        self.next_message = False
 
     def has_message(self):
         return len(self.message) > 0
