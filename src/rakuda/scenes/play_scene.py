@@ -29,7 +29,7 @@ class PlayScene:
 
         if pyxel.rndi(0,64) == 0:
             tobo = Tobo(self, pyxel.rndi(0, config.WINDOW_WIDTH), pyxel.rndi(0, config.WINDOW_HEIGHT))
-            self.entities.append(tobo)
+            self.entities.insert(0, tobo)
 
         entities = []
         for entity in self.entities:
@@ -46,7 +46,7 @@ class PlayScene:
             self.rakuda.right()
         if pyxel.btn(pyxel.KEY_LEFT) or pyxel.btn(pyxel.GAMEPAD1_BUTTON_DPAD_LEFT):
             self.rakuda.left()
-        if pyxel.btn(pyxel.KEY_A) or pyxel.btn(pyxel.GAMEPAD1_BUTTON_A):
+        if pyxel.btnp(pyxel.KEY_A) or pyxel.btnp(pyxel.GAMEPAD1_BUTTON_A):
             self.rakuda.knife()
 
         if not self.rakuda.alive:
@@ -60,7 +60,6 @@ class PlayScene:
         bar_w = config.WINDOW_WIDTH - 16
         pyxel.rect(8, config.WINDOW_HEIGHT - 16, bar_w, 8, 6)
         if self.rakuda.damage > 0:
-
             damage = self.rakuda.damage
             c = 10 if damage < 22 else 8
             w = bar_w if damage > 24 else damage * (bar_w / 23)

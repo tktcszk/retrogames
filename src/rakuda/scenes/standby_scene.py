@@ -21,7 +21,7 @@ class StandbyScene:
         self.age += 1
         if pyxel.btn(pyxel.KEY_UP) or pyxel.btn(pyxel.GAMEPAD1_BUTTON_DPAD_UP):
             self.game.notify(self, "play")
-        if pyxel.btn(pyxel.KEY_A):
+        if pyxel.btn(pyxel.KEY_A) or pyxel.btn(pyxel.GAMEPAD1_BUTTON_A):
             self.game.notify(self, "title")
         return
 

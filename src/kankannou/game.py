@@ -37,7 +37,7 @@ class Game:
         for _, scene in self.scenes.items():
             scene.stop()
         self.current_scene_name = scene_name
-        self.get_current_scene().start()
+        #self.get_current_scene().start()
 
     def notify(self, sender, message=None):
         if isinstance(sender, TitleScene):

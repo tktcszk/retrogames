@@ -16,17 +16,17 @@ class SongScene:
         self.entities = []
 
     def start(self):
-        pyxel.playm(self.msc, loop=True)
+        pyxel.playm(self.msc, loop=False)
 
     def stop(self):
         pyxel.stop()
 
     def update(self):
-        if pyxel.btnp(pyxel.KEY_UP):
+        if pyxel.btnp(pyxel.KEY_UP) or pyxel.btnp(pyxel.GAMEPAD1_BUTTON_DPAD_UP):
             self.command_idx = (self.command_idx - 1) % len(self.commands)
-        if pyxel.btnp(pyxel.KEY_DOWN):
+        if pyxel.btnp(pyxel.KEY_DOWN) or pyxel.btnp(pyxel.GAMEPAD1_BUTTON_DPAD_DOWN):
             self.command_idx = (self.command_idx + 1) % len(self.commands)
-        if pyxel.btnp(pyxel.KEY_A):
+        if pyxel.btnp(pyxel.KEY_A) or pyxel.btnp(pyxel.GAMEPAD1_BUTTON_A):
             if self.commands[self.command_idx] == "back to title":
                 self.game.notify(self, "title")
             elif self.commands[self.command_idx] == "stop":
